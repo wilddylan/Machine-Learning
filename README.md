@@ -4,4 +4,4 @@
 
 ===
 
-- [ ] [何谓机器学习](posts/about.md)
+- [x] [何谓机器学习](posts/about.md)
