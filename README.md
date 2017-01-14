@@ -6,4 +6,4 @@
 
 - [x] [何谓机器学习](posts/about.md)
 - [ ] [k-近邻算法](posts/kNN.md)
-- [ ] [相关代码](k-algorithm/kNN.py)
+      - [相关代码](k-algorithm/kNN.py)
