@@ -46,4 +46,15 @@ def file2matrix(filename) :
         classLabelVector.append(int(listFromLine[-1]))
         index += 1
 
-    return returnMat, classLabelVector                                  
+    return returnMat, classLabelVector
+
+def autoNorm(dataSet) :
+    minvals = dataSet.min(0)
+    maxVals = dataSet.max(0)
+
+    ranges = maxVals - minvals
+    normDataSet = zeros(shape(dataSet))
+    m = dataSet.shape[0]
+    normDataSet = dataSet - tile(minvals, (m, 1))
+    normDataSet = normDataSet / tile(ranges, (m, 1))
+    return normDataSet, ranges, minvals

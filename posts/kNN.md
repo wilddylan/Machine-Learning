@@ -159,3 +159,137 @@ def createDataSet():
 - 每周消费的冰激凌公升数
 
 我们看到，统计的东西都比较奇葩，我们先从文件中把这些数值解析出来，输出训练样本矩阵和分类标签向量。在kNN.py中继续书写代码：
+
+- 从文本中读入数据
+
+```python
+def file2matrix(filename) :
+    fr = open(filename)
+    arrayOfLines = fr.readlines()
+    numberOfLines = len(arrayOfLines) # 得到文件行数
+    returnMat = zeros((numberOfLines, 3)) # 创建用0填充的矩阵，这里为了简化处理，我们将矩阵的另一个纬度设置为3，可以按照自己的需求增加数量。
+
+    classLabelVector = []
+    index = 0
+    # 解析文件
+    for line in arrayOfLines : 
+        line = line.strip() # 截取掉所有的回车字符
+        listFromLine = line.split('\t')
+        returnMat[index, :] = listFromLine[0: 3] # range
+        classLabelVector.append(int(listFromLine[-1]))
+        index += 1
+
+    return returnMat, classLabelVector
+```
+
+```python
+>>> import kNN
+>>> mat, vector = kNN.file2matrix('datingTestSet2.txt')
+
+>>> mat, vector = kNN.file2matrix('datingTestSet2.txt')
+>>> mat
+array([[  4.09200000e+04,   8.32697600e+00,   9.53952000e-01],
+       [  1.44880000e+04,   7.15346900e+00,   1.67390400e+00],
+       [  2.60520000e+04,   1.44187100e+00,   8.05124000e-01],
+       ...,
+       [  2.65750000e+04,   1.06501020e+01,   8.66627000e-01],
+       [  4.81110000e+04,   9.13452800e+00,   7.28045000e-01],
+       [  4.37570000e+04,   7.88260100e+00,   1.33244600e+00]])
+>>> vec
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'vec' is not defined
+>>> vector
+[3 ... 2]
+```
+
+现在我们已经从文文件中导入了数据，并将其格式化为想要的格式，接着我们需要了解数据的真是含义，我们可以直观的浏览文本文件，但是这种方法非常不友好，一般来说，我们会采用图形化的方式直观的展示数据。下面我们就用Python图形化工具来图形化展示数据内容，以便辨识出一些数据模式。
+
+- 分析数据，使用`Matplotlib`创建散点图
+
+```shell
+pip install matplotlib
+```
+
+接下来打开python命令行，我们对刚才读入的内容进行测试的展示
+
+```python
+>>> from matplotlib import *
+>>> import matplotlib.pyplot as plt
+>>> import kNN
+>>> import numpy as np
+>>> mat, vec = kNN.file2matrix('datingTestSet2.txt')
+>>> fig = plt.figure()
+>>> ax = fig.add_subplot(111)
+>>> ax.scatter(mat[:, 1], mat[:, 2], 15.0*np.array(vec), 15.0*np.array(vec))
+<matplotlib.collections.PathCollection object at 0x1087cf0d0>
+>>> plt.show()
+```
+
+![](../imgs/figure_k_1.png)
+
+这个时候，我们展示的是数据集的第一列与第二列所绘制的图，这里我们很难看出来什么端倪，所以我们尝试使用第一列和第二列作为特征来绘图，重新书写上边代码：
+
+```shell
+ax.scatter(mat[:, 0], mat[:, 1], 15.0*np.array(vec), 15.0*np.array(vec))
+```
+
+然后我们得到了以下数据图：
+
+![](../imgs/figure_k_2.png)
+
+这次，我们可以看到，图中清晰的标识了3个不同的样本分类区域。
+
+- 准备数据，归一化数值
+
+我们随便的抽取了4组差异比较大的数据
+
+|      | 玩游戏所消耗时间 | 里程数   | 冰激凌公升数 | 样本分类 |
+| ---- | -------- | ----- | ------ | ---- |
+| 1    | 0.8      | 400   | 0.5    | 1    |
+| 2    | 12       | 13400 | 0.9    | 3    |
+| 3    | 0        | 20000 | 1.1    | 2    |
+| 4    | 67       | 32000 | 0.1    | 2    |
+
+我们很容易发现，如果我们计算样本3和样本4之间的距离，可以使用下边的方法
+
+$\sqrt{(0-67)^2 + (20000 + 32000)^2 + (1.1-0.1)^2}$
+
+但是这些大的值堆结果的影响比较大，因此，作为比较重要的特征属性，不应该如此的影响计算结果，所以在处理数据的时候，我们对数据进行归一化处理，将取值的范围处理到0 - 1或者-1 ~ -1之间，下面的公事，可以将任意范围内的特征值转换为0-1区间内的值：
+
+$newValue = (oldValue - min)/(max - min)$
+
+其中，min和max分别为特征值中最大和最小值，虽然改变数值范围增加了分类器的复杂度，但是为了得到准确的结果，必须这样做，所以我们在kNN.py中新增一个函数`autoNorm()`，用来将数字特征值转化为0-1的区间：
+
+```python
+def autoNorm(dataSet) :
+    minvals = dataSet.min(0) # 存放每列的最小值
+    maxVals = dataSet.max(0) # 存放每列的最大值
+
+    ranges = maxVals - minvals
+    normDataSet = zeros(shape(dataSet))
+    m = dataSet.shape[0]
+    normDataSet = dataSet - tile(minvals, (m, 1))
+    # 特征值相除
+    normDataSet = normDataSet / tile(ranges, (m, 1))
+    return normDataSet, ranges, minvals
+```
+
+运行结果：
+
+```python
+>>> import kNN
+>>> mat, vec = kNN.file2matrix('datingTestSet2.txt')
+>>> a, b, c = kNN.autoNorm(mat)
+>>> a
+array([[ 0.44832535,  0.39805139,  0.56233353],
+       [ 0.15873259,  0.34195467,  0.98724416],
+       [ 0.28542943,  0.06892523,  0.47449629],
+       ...,
+       [ 0.29115949,  0.50910294,  0.51079493],
+       [ 0.52711097,  0.43665451,  0.4290048 ],
+       [ 0.47940793,  0.3768091 ,  0.78571804]])
+```
+
+这样一来，我们把值处理成了我们预期的范伟内的值。
+
