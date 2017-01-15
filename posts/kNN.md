@@ -344,7 +344,7 @@ the classifier came back with: 3, the real answer is: 1
 the total error rate is: 0.050000
 ```
 
-所以我们看到，数据集的错误率是2.4%，这里会有一定的偏差，因为我们随机选取的数据可能会不同。
+所以我们看到，数据集的错误率是5%，这里会有一定的偏差，因为我们随机选取的数据可能会不同。
 
 - 使用算法
 
