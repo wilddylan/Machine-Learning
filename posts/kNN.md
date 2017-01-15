@@ -293,3 +293,90 @@ array([[ 0.44832535,  0.39805139,  0.56233353],
 
 这样一来，我们把值处理成了我们预期的范伟内的值。
 
+- 测试算法
+
+通常我们把数据集的90%的数据当做训练集，余下的10%作为测试集，着10%的数据是随机选择的。 下面，我们来书写测试程序，并通过`datingTestSet.txt`来测试程序：
+
+```python
+def datingClassTest() :
+    hoRatio = 0.10 # 设置抽取多少数据进行测试集
+    datingDataMat, datingLabels = file2matrix('datingTestSet2.txt') # 读入数据集
+    normMat, ranges, minVals = autoNorm(datingDataMat) # 转化特征值至 0 - 1 区间内
+    m = normMat.shape[0] 
+    numTestVecs = int( m * hoRatio ) # 计算测试向量的数量
+    errorCount = 0.0 
+
+    for i in range(numTestVecs) :
+        classifierResult = classify0(normMat[i, :], normMat[numTestVecs:m, :], datingLabels[numTestVecs: m], 3) # 使用近邻算法得出结果
+
+        print "the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i])
+        if (classifierResult != datingLabels[i]) : errorCount += 1.0 # 错误记录与处理等
+
+    print "the total error rate is: %f" % (errorCount / float(numTestVecs))
+```
+
+然后我们在python环境中通过
+
+```shell
+reload(kNN)
+```
+
+来重新加载kNN.py模块，然后调用
+
+```python
+kNN.datingClassTest()
+```
+
+得到结果:
+
+```
+the classifier came back with: 3, the real answer is: 3
+the classifier came back with: 2, the real answer is: 2
+the classifier came back with: 1, the real answer is: 1
+the classifier came back with: 1, the real answer is: 1
+the classifier came back with: 1, the real answer is: 1
+...
+the classifier came back with: 3, the real answer is: 3
+the classifier came back with: 3, the real answer is: 3
+the classifier came back with: 2, the real answer is: 2
+the classifier came back with: 1, the real answer is: 1
+the classifier came back with: 3, the real answer is: 1
+the total error rate is: 0.050000
+```
+
+所以我们看到，数据集的错误率是2.4%，这里会有一定的偏差，因为我们随机选取的数据可能会不同。
+
+- 使用算法
+
+我们使用上面建立好的分类器构建一个可用的系统，通过输入这些特征值帮她预测喜欢程度。我们来编写代码：
+
+```python
+def classifyPerson() :
+    resultList = ['not', 'small doses', 'large does']
+    percentTats = float(raw_input("percent of time spent on video games?"))
+    miles = float(raw_input("flier miles per year?"))
+    ice = float(raw_input("liters of ice-cream?"))
+
+    datingDataMat, datingLabels = file2matrix('datingTestSet2.txt')
+    normMat, ranges, minVals = autoNorm(datingDataMat)
+
+    inArr = array([miles, percentTats, ice])
+    classifierResult = classify0((inArr - minVals) / ranges, normMat, datingLabels, 3)
+    print "you will like this person: ", resultList[classifierResult - 1]	
+```
+
+这里的代码大家比较熟悉了，就是加入了raw_input用于输入，我们来看结果：
+
+```python
+>>> reload(kNN)
+<module 'kNN' from 'kNN.py'>
+>>> kNN.classifyPerson()
+percent of time spent on video games?10
+flier miles per year?10000
+liters of ice-cream?0.5
+you will like this person:  small doses
+```
+
+我们在做近邻算法的时候也发现，并没有做`训练算法`这一环节，因为我们不需要训练，直接计算就好了。
+
+同时我们也发现一个问题，k-近邻算法特别慢，它需要对每一个向量进行距离的计算，这该怎么优化呢？

@@ -58,3 +58,32 @@ def autoNorm(dataSet) :
     normDataSet = dataSet - tile(minvals, (m, 1))
     normDataSet = normDataSet / tile(ranges, (m, 1))
     return normDataSet, ranges, minvals
+
+def datingClassTest() :
+    hoRatio = 0.10
+    datingDataMat, datingLabels = file2matrix('datingTestSet2.txt')
+    normMat, ranges, minVals = autoNorm(datingDataMat)
+    m = normMat.shape[0]
+    numTestVecs = int( m * hoRatio )
+    errorCount = 0.0
+
+    for i in range(numTestVecs) :
+        classifierResult = classify0(normMat[i, :], normMat[numTestVecs:m, :], datingLabels[numTestVecs: m], 3)
+
+        print "the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i])
+        if (classifierResult != datingLabels[i]) : errorCount += 1.0
+
+    print "the total error rate is: %f" % (errorCount / float(numTestVecs))
+
+def classifyPerson() :
+    resultList = ['not', 'small doses', 'large does']
+    percentTats = float(raw_input("percent of time spent on video games?"))
+    miles = float(raw_input("flier miles per year?"))
+    ice = float(raw_input("liters of ice-cream?"))
+
+    datingDataMat, datingLabels = file2matrix('datingTestSet2.txt')
+    normMat, ranges, minVals = autoNorm(datingDataMat)
+
+    inArr = array([miles, percentTats, ice])
+    classifierResult = classify0((inArr - minVals) / ranges, normMat, datingLabels, 3)
+    print "you will like this person: ", resultList[classifierResult - 1]
