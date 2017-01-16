@@ -9,5 +9,6 @@
     "typescript.check.tscVersion": false,
 
     "telemetry.enableTelemetry": false,
-    "telemetry.enableCrashReporter": false
-}
+    "telemetry.enableCrashReporter": false,
+    "python.linting.pylintEnabled": false
+  }
