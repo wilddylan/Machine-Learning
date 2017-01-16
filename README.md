@@ -1,5 +1,7 @@
 <p align="center">
-      <img src="imgs/logo.png" width="412px" height="262px" />
+      <img src="imgs/logo.png" width="275px" height="175px" />
+</p>
+<p align="center">
 一直以来，机器学习被很多人所向往，但是网络上的书籍以及一些视频都充斥着各种各样高端大气的词汇，这份学习履历希望可以帮助大家更快的接触到机器学习的本质理念，并可以用于开发测试。`简单，快捷`。
 阅读以下文章前，建议先简单了解`python2.7`、`NumPy`、`Matplotlib`、`线性代数`、`概率论`等知识。
 </p>
