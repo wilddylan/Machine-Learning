@@ -7,5 +7,7 @@
 - [x] [何谓机器学习](posts/about.md)
 - [x] [k-近邻算法](posts/kNN.md)
       - [相关代码](k-algorithm/kNN.py)
-- [ ] [决策树](posts/tree.md)
+- [x] [决策树](posts/tree.md)
       - [相关代码](a-trees/trees.py)
+- [ ] [朴素贝叶斯（基于概率论的分类方法）](posts/bayes.md)
+      - [相关代码](bayes/bayes.py)
