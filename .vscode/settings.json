@@ -1,3 +1,13 @@
+// 将设置放入此文件中以覆盖默认设置
 {
-    "python.linting.pylintEnabled": false
+    "editor.fontFamily": "OperatorMono Nerd Font",
+    "editor.fontWeight": "lighter",
+
+    "editor.roundedSelection": false,
+    "files.autoSave": "onFocusChange",
+    "editor.tabSize": 2,
+    "typescript.check.tscVersion": false,
+
+    "telemetry.enableTelemetry": false,
+    "telemetry.enableCrashReporter": false
 }
