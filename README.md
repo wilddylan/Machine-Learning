@@ -6,6 +6,10 @@
 阅读以下文章前，建议先简单了解`python2.7`、`NumPy`、`Matplotlib`、`线性代数`、`概率论`等知识。
 </p>
 
+<p align="center">
+点击右上角star按钮赞扬或者watch按钮持续关注文章更新
+</p>
+
 ===
 
 - [x] [何谓机器学习](posts/about.md)
@@ -15,8 +19,8 @@
       - [相关代码](a-trees/trees.py)
 - [x] [朴素贝叶斯（基于概率论的分类方法）](posts/bayes.md)
       - [相关代码](bayes/bayes.py)
-- [ ] [Logistic回归]()
-      - [相关代码]()
+- [ ] [Logistic回归](posts/logistic.md)
+      - [相关代码](logistic/logRegres.py)
 - [ ] [支持向量机]()
       - [相关代码]()
 - [ ] [AdaBoost算法提高分类性能]()

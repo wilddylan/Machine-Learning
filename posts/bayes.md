@@ -339,3 +339,87 @@ def bagOfWords2VecMN(vocabList, inputSet) :
         
     return returnVec
 ```
+
+#### 示例，使用朴素贝叶斯过滤垃圾邮件
+
+接下来，我们来了解一个著名的应用：电子邮件垃圾过滤。首先看一下如何使用通用框架来处理问题。
+
+- 收集数据：提供文本文件
+- 准备数据：将文本文件解析成词条向量
+- 分析数据：检查词条确保解析的正确性
+- 训练算法：使用我们之前简历的tainNB0函数
+- 测试算法：使用calssifyNB，并构建一个新的测试函数来计算文档集的错误率
+- 使用算法：构建一个完整的程序对一组文档进行分类，将分类错误的文档输出到屏幕上
+
+我在email文件夹下放了一些用于测试的邮件，下面我们来进行文件解析以及完整的垃圾邮件测试函数的编写：
+
+```python
+# 接受一个大字符串并将其解析为字符串列表，该函数去掉小于2个字符的字符串，并将所有的字符转换为小写，这里我们可以自定义解析以及处理的操作
+def textParser(bigString) :
+    import re
+    listOfTokens = re.split(r'\W*', bigString)
+    return [tok.lower() for tok in listOfTokens if len(tok) > 2]
+
+def spamTest() :
+    docList = []
+    classList = []
+    fullText = []
+
+    # 文件夹下分别有spam与ham文件夹，构建一个测试集与一个训练集，两个集合中的邮件都是随机选择的
+    for i in range(1, 26) :
+        wordList = textParser(open('email/spam/%d.txt' % i).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+        
+        wordList = textParser(open('email/ham/%d.txt' % i).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+    
+    vocabList = createVocablist(docList)
+    trainingSet = range(50)
+    testSet = []
+
+    # 随机构建训练集
+    for i in range(10) :
+        randIndex = int(random.uniform(0, len(trainingSet)))
+        testSet.append(trainingSet[randIndex])
+        del(trainingSet[randIndex])
+
+    trainMat = []
+    trainClasses = []
+
+    for docIndex in trainingSet :
+        trainMat.append(bagOfWords2VecMN(vocabList, docList[docIndex]))
+        trainClasses.append(classList[docIndex])
+
+    p0V, p1V, pSpam = trainNBO(array(trainMat), array(trainClasses))
+    errorCount = 0
+
+    for docIndex in testSet :
+        wordVector = bagOfWords2VecMN(vocabList, docList[docIndex])
+        if classifyNB(array(wordVector), p0V, p1V, pSpam) != classList[docIndex] :
+            errorCount += 1
+
+    print 'the error rate is: ', float(errorCount) / len(testSet)
+```
+
+得到如下结果：
+
+```python
+>>> reload(bayes)
+<module 'bayes' from 'bayes.py'>
+>>> bayes.spamTest()
+the error rate is:  0.0
+>>> bayes.spamTest()
+the error rate is:  0.0
+>>> bayes.spamTest()
+the error rate is:  0.0
+>>> bayes.spamTest()
+the error rate is:  0.1
+```
+
+我们可以将上述过程重复多次，比如说10次，然后求平均值，我这么尝试了一下，最终得到的平均错误率为 6%。当出现错误的时候，若我们把正常邮件也归为垃圾邮件，那会有很大的问题，以后我们抽一小节来修正分类器。
+
+下篇我们将开始了解`Logistic回归`。
