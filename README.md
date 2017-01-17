@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-点击右上角star按钮赞扬或者watch按钮持续关注文章更新
+:point_right: 点击右上角star按钮 :star2: 或 watch按钮持续关注文章更新 :bell:
 </p>
 
 ===
