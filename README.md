@@ -13,7 +13,7 @@
       - [相关代码](k-algorithm/kNN.py)
 - [x] [决策树](posts/tree.md)
       - [相关代码](a-trees/trees.py)
-- [ ] [朴素贝叶斯（基于概率论的分类方法）](posts/bayes.md)
+- [x] [朴素贝叶斯（基于概率论的分类方法）](posts/bayes.md)
       - [相关代码](bayes/bayes.py)
 - [ ] [Logistic回归]()
       - [相关代码]()
