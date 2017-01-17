@@ -259,7 +259,83 @@ array([ 0.        ,  0.        ,  0.        ,  0.05263158,  0.05263158,
         0.        ,  0.15789474,  0.        ,  0.05263158,  0.        ,
         0.        ,  0.        ])
 ```
+
 实际使用该函数进行分类时，还需要解决一些函数中的缺陷。
 
 ###### 测试算法，根据现实情况修改分类器
 
+利用贝叶斯文档分类器对文档进行分类，要计算多个概率的乘积以获得文档属于某个类别的概率，即计算 p( w0|1 )p( w1|1 )p( w2|1 )。如果其中一个概率值为0，那么最后的乘积也为0，为了降低这种影响，我们对上边的代码稍作修改：
+
+```python
+    # 修改 trainNBO 方法中如下代码，将所有词的出现次数初始化为1，将分母初始化为2
+    p0Num = ones(numWords)
+    p1Num = ones(numWords)
+
+    p0Denom = 2.0
+    p1Denom = 2.0
+```
+
+另一个问题是下溢出，这是由于太多很小的数字相乘造成的。当计算p的乘积的时候，由于大多数因子都很小，所以程序会下溢出或者得不到正确答案（使用python相乘许多很小的数，最后四舍五入后会得到0）。一种解决的办法就是对乘积取自然对数。在代数中有 ln(a *b) = ln(a) + ln(b) ，于是通过求对数可以避免下溢出或者浮点数舍入导致的错误。所以我们修改如下代码：
+
+```python
+    # 修改 trainNBO 方法中如下代码
+    p1Vect = log(p1Num / p1Denom)
+    p0Vect = log(p0Num / p0Denom)
+```
+
+这样我们已经准备好构造完整的分类器了，继续想bayes.py中添加如下代码：
+
+```python
+# 参数1：要分类的向量 余下的参数为 trainNBO 方法返回的3个概率
+def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1) :
+    p1 = sum(vec2Classify * p1Vec) + log(pClass1) # 计算两个向量相乘的结果，这里的相乘是指对应元素相乘，即将2个向量中的第一个元素相乘，然后第二个元素相乘... 然后相加，将结果加到类别的对数概率上
+    p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
+
+    if p1 > p0 :
+        return 1
+    else :
+        return 0
+
+# 测试函数，包含了上边所有的逻辑操作
+def testingNB() :
+    listOPosts, listClasses = loadDataSet()
+    myVocabList = createVocablist(listOPosts)
+
+    trainMat = []
+    for postinDoc in listOPosts :
+        trainMat.append(setOfWords2Vec(myVocabList, postinDoc))
+    
+    p0V, p1V, pAb = trainNBO(array(trainMat), array(listClasses))
+
+    testEntry = ['love', 'my', 'dalmation']
+    thisDoc = array(setOfWords2Vec(myVocabList, testEntry))
+    print testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb)
+
+    testEntry = ['stupid', 'garbage']
+    thisDoc = array(setOfWords2Vec(myVocabList, testEntry))
+    print testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb)
+
+```
+
+接下来我们运行看下结果：
+
+```python
+>>> reload(bayes)
+<module 'bayes' from 'bayes.py'>
+>>> bayes.testingNB()
+['love', 'my', 'dalmation'] classified as:  0
+['stupid', 'garbage'] classified as:  1
+```
+
+对文本做一些操作，看看分类器会输出什么结果。但是目前为止，我们将每个词的出现与否作为一个特征，这可以被描述为`词集模型`。如果一个词在文档中出现不止一次，这可能意味着包含该词是否出现在文档中所不能表达的某种意思，这种方法被称为`词袋模型`，在词袋中，每个单词可以出现多次，而在词集中只能出现一次。为了适应词袋模型，需要对函数`setOfWords2Vec`稍作修改：
+
+```python
+def bagOfWords2VecMN(vocabList, inputSet) :
+    returnVec = [0] * len(vocabList)
+
+    for word in inputSet :
+        if word in vocabList :
+            returnVec[vocabList.index(word)] += 1
+        
+    return returnVec
+```
