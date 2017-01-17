@@ -159,6 +159,107 @@ def setOfWords2Vec(vocablist, inputSet) :
 
 ###### 训练算法，从词向量计算概率
 
+接下来，我们看看如何使用这些数字计算概率。现在已经知道一个词是否出现在一篇文档中，也知道该文档的所属类别，我们重写贝叶斯准则，将我们之前所说的公式中 x, y 替换为w，w表示一个向量，它有多个数值组成，在这个例子中，数值个数与词汇表中的词个数相同。
 
+```
+p( ci | w ) = p ( w | ci ) * p ( ci ) / p ( w )
+```
 
+> 注：这里的i是下标
+
+我们将使用上述的公式，对每个类计算该值，然后比较这两个概率的大小。如何计算呢？
+
+- 通过类别i（侮辱性或者非侮辱性）中文档数除以总的文档数来计算概率 p( ci )
+- 计算 p( w | ci )，这里就要使用朴素贝叶斯假设
+
+如果w展开为一个个独立的特征，那么就可以将上述概率写作 p( w0, w1, ... wn | ci )，这里假设所有的词都相互独立，该假设也称为条件独立性假设，它意味着可以使用 p( w0 | ci ) p( w1 | ci ) ... p( wn | ci )来计算上述概率，这就极大的简化了计算的过程。
+
+该函数的伪代码如下：
+
+```
+计算每个类别中的文档数目
+对每篇训练文档：
+    对每个类别：
+        如果词条出现在文档中 -> 增加该词条的计数值
+        增加所有词条的计数值
+
+对每个类别：
+    对每个词条：
+        将该词条的数目除以总词条数据得到条件概率
+
+返回每个类别的条件概率
+```
+
+我们来实现上述的功能，继续在bayes中书写代码：
+
+```python
+# 输入参数：文档举证以及由每篇文档类别标签所构成的向量
+def trainNBO(trainMatrix, trainCategory) :
+    numTrainDocs = len(trainMatrix) # 维度
+    numWords = len(trainMatrix[0]) # 每行多少个词
+    pAbusive = sum(trainCategory) / float(numTrainDocs) # 侮辱性文档的概率，由于侮辱性为1，所以直接加起来然后除就好了
+
+    # 初始化概率计算
+
+    p0Num = zeros(numWords) # 初始化一个元素全为0的向量，如果出现该词对应的数量+1
+    p1Num = zeros(numWords)
+
+    p0Denom = 0.0 
+    p1Denom = 0.0
+
+    for i in range(numTrainDocs) : 
+        if trainCategory[i] == 1 :
+            p1Num += trainMatrix[i] # 向量相加
+            p1Denom += sum(trainMatrix[i])
+        else :
+            p0Num += trainMatrix[i]
+            p0Denom += sum(trainMatrix[i])
+
+    # 用一个数组除以浮点数，计算每个单词出现的概率
+    p1Vect = p1Num / p1Denom
+    p0Vect = p0Num / p0Denom
+
+    return p0Vect, p1Vect, pAbusive
+```
+
+最后我们看一下实际的效果：
+
+```python
+>>> from numpy import *
+>>> reload(bayes)
+<module 'bayes' from 'bayes.py'>
+>>> listOPosts, listClasses = bayes.loadDataSet()
+>>> myVocabList = bayes.createVocablist(listOPosts)
+>>> trainMat = []
+>>> for postinDoc in listOPosts:
+...     trainMat.append(bayes.setOfWords2Vec(myVocabList, postinDoc)) # 使用词向量来填充trainMat列表
+...
+>>> p0V, p1V, pAb = bayes.trainNBO(trainMat, listClasses)
+>>> pAb
+0.5
+>>> p0V
+array([ 0.04166667,  0.04166667,  0.04166667,  0.        ,  0.        ,
+        0.04166667,  0.04166667,  0.04166667,  0.        ,  0.04166667,
+        0.04166667,  0.04166667,  0.04166667,  0.        ,  0.        ,
+        0.08333333,  0.        ,  0.        ,  0.04166667,  0.        ,
+        0.04166667,  0.04166667,  0.        ,  0.04166667,  0.04166667,
+        0.04166667,  0.        ,  0.04166667,  0.        ,  0.04166667,
+        0.04166667,  0.125     ])
+>>> p1V
+
+        0.04166667,  0.04166667,  0.        ,  0.04166667,  0.04166667,
+        0.04166667,  0.        ,  0.04166667,  0.        ,  0.04166667,
+        0.04166667,  0.125     ])
+>>> p1V
+array([ 0.        ,  0.        ,  0.        ,  0.05263158,  0.05263158,
+        0.        ,  0.        ,  0.        ,  0.05263158,  0.05263158,
+        0.        ,  0.        ,  0.        ,  0.05263158,  0.05263158,
+        0.05263158,  0.05263158,  0.05263158,  0.        ,  0.10526316,
+        0.        ,  0.05263158,  0.05263158,  0.        ,  0.10526316,
+        0.        ,  0.15789474,  0.        ,  0.05263158,  0.        ,
+        0.        ,  0.        ])
+```
+实际使用该函数进行分类时，还需要解决一些函数中的缺陷。
+
+###### 测试算法，根据现实情况修改分类器
 
