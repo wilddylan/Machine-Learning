@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-:point_right: 如果你没有安装python，请访问[在线python运行python代码](https://www.tutorialspoint.com/execute_python_online.php) :boom:
+:point_right: 如果你没有安装python，请访问 <a href="https://www.tutorialspoint.com/execute_python_online.php">在线运行python代码</a> :boom:
 </p>
 
 ===
