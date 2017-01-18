@@ -10,6 +10,10 @@
 :point_right: 点击右上角star按钮 :star2: 或 watch按钮持续关注文章更新 :bell:
 </p>
 
+<p align="center">
+:point_right: 如果你没有安装python，请访问[在线python运行python代码](https://www.tutorialspoint.com/execute_python_online.php) :boom:
+</p>
+
 ===
 
 - [x] [何谓机器学习](posts/about.md)
