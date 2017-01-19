@@ -27,7 +27,7 @@
       - [相关代码](a-trees/trees.py)
 - [x] [朴素贝叶斯（基于概率论的分类方法）](posts/bayes.md)
       - [相关代码](bayes/bayes.py)
-- [x] [Logistic回归](posts/logistic.md)
+- [x] -> [Logistic回归](posts/logistic.md)
       - [相关代码](logistic/logRegres.py)
 - [ ] [支持向量机](posts/svm.md)
       - [相关代码](svm/svmMLiA.py)
