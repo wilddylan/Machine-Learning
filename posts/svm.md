@@ -208,4 +208,8 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter) :
   return b, alphas
 ```
 
+这个函数比较大，可能是学习过程中最大的一个函数了，希望大家细细的看一下代码的注释。
+
+*函数的解析我还是等一个头脑清醒的时候弄吧，现在已经12点10分了，稍有点晕乎，去搞搞业务代码* 
+
 **Comming soon**
