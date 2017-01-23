@@ -89,4 +89,123 @@
 
 由于改变一个alpha可能会导致该约束条件失效，因此我们总是同时改变两个alpha。为此，我们将构建一个辅助函数，用于在某个区间范围内随机选择一个整数。同时，我们也需要另一个辅助函数，用于在数值太大时对其进行调整。我们开始写代码：
 
-**Coming soon**
+```python
+# 打开文件进行逐行解析
+def loadDataSet(filename) :
+  dataMat = []
+  labelMat = []
+
+  fr = open(filename)
+
+  for line in fr.readlines() :
+    lineArr = line.strip().split('\t')
+    dataMat.append([float(lineArr[0]), float(lineArr[1])])
+    labelMat.append(float(lineArr[2]))
+
+  return dataMat, labelMat
+
+# i：第一个alpha的下标
+# m：所有alpha的数目
+# 只要函数值不等于输入值i，函数就会随机进行选择
+def selectJrand(i, m) :
+  j = i
+  while ( j == i ) :
+    j = int(random.uniform(0, m))
+  return j
+
+# 用于调整大于H或小于L的alpha值
+def clipAlpha(aj, H, L) :
+  if aj > H :
+    aj = H
+  if L > aj :
+    aj = L
+  return aj
+```
+
+进行简单的读取测试：
+
+```python
+>>> import svmMLiA
+>>> dataArr, labelArr = svmMLiA.loadDataSet('testSet.txt')
+>>> labelArr
+[-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0
+, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -
+1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
+ -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]
+```
+
+我们也可以看的出来，这里使用的类别标签是-1和1，并不是0和1.上述工作完成后，就可以使用SMO算法的第一个版本了，该SMO函数的伪代码大致如下：
+
+```
+创建一个alpha向量并将其初始化为0向量
+当迭代次数小于最大迭代次数时 （外循环）
+  对数据集中的每个数据向量 （内循环）：
+    如果该数据向量可以被优化：
+      随机选择另外一个数据向量
+      同时优化这两个向量
+      如果两个向量都不能被优化，退出内循环
+  如果所有向量都被有被优化，增加迭代数目，继续下一次循环
+```
+
+> 在python中，如果某行以 `\` 符号结束，那么就意味着该行语句没有结束并会在下一行延续。 类似与 OC 中宏定义的 `\` 换行，接下来我们来看一个简化版的SMO算法：
+
+```python
+def smoSimple(dataMatIn, classLabels, C, toler, maxIter) :
+  dataMatrix = mat(dataMatIn)
+  labelMat = mat(classLabels).transpose()
+
+  b = 0
+  m, n = shape(dataMatrix)
+
+  alphas = mat(zeros((m, 1)))
+  iter = 0
+
+  while ( iter < maxIter ) :
+    alphaPairsChanged = 0
+    for i in range(m) :
+      fXi = float( multiply(alphas, labelMat).T * (dataMatrix*dataMatrix[i, :].T) ) + b
+      Ei = fXi - float(labelMat[i])
+
+      if (labelMat[i] * Ei < -toler) and (alphas[i] < C) or ((labelMat[i] * Ei > toler) and (alphas[i] > 0)):
+        j = selectJrand(i, m)
+        fXj = float(multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[j, :].T)) + b
+        Ej = fXj - float(labelMat[j])
+        alphaIold = alphas[i].copy()
+        alphaJold = alphas[j].copy()
+
+        if (labelMat[i] != labelMat[j]) :
+          L = max(0, alphas[j] - alphas[i])
+          H = min(C, C + alphas[j] - alphas[i])
+        else:
+          L = max(0, alphas[j] + alphas[i] - C)
+          H = min(C, alphas[j] + alphas[i])
+
+        if L == H: print "L == H"; continue
+
+        eta = 2.0 * dataMatrix[i, :] * dataMatrix[j, :].T - dataMatrix[i, :] * dataMatrix[i, :].T - dataMatrix[j, :] * dataMatrix[j, :].T
+        if eta >= 0: print "eta >= 0"; continue
+
+        alphas[j] -= labelMat[j] * (Ei - Ej) / eta
+        alphas[j] = clipAlpha(alphas[j], H, L)
+
+        if (abs(alphas[j] - alphaJold) < 0.00001) : print "j not moving enough"; continue
+
+        alphas[i] += labelMat[j] * labelMat[i] * (alphaJold - alphas[j])
+        b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[i, :].T - labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[i, :] * dataMatrix[j, :].T
+        b2 = b - Ej - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[j, :].T - labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[j, :] * dataMatrix[j, :].T
+
+        if ( 0 < alphas[i] ) and ( C > alphas[i] ) : b = b1
+        elif ( 0 < alphas[j] ) and ( C > alphas[j] ) : b = b2
+        else : b = ( b1 + b2 ) / 2.0
+
+        alphaPairsChanged += 1
+        print "iter: %d i: %d, pairs changed %d" % (iter, i, alphaPairsChanged)
+
+    if (alphaPairsChanged == 0) : iter += 1
+    else : iter = 0
+
+    print "iteration number: %d" % iter
+  return b, alphas
+```
+
+**Comming soon**
