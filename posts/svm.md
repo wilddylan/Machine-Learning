@@ -253,12 +253,12 @@ shape(alphas[alphas > 0])
 
 对整个数据的扫描非常容易，而实现非边界alpha的扫描时，首先需要建立这些alpha值的列表，然后在对这个表进行遍历，同时该步骤会跳过那些已知的不会改变的alpha值。
 
-在选择第一个alpha值之后，算法会通过一个内循环来选择第二个alpha值。在优化过程中，会通过 `最大化步长` 的方式来获得第二个alpha值。在简化版SMO算法中，我们会在选择 j 之后计算错误率 Ej 。但是在这里，我们会建立一个全局的缓存用于保存误差值，并从中选择使得步长或者说 `Ei-Ej` 最大的alpha值。
+在选择第一个alpha值之后，算法会通过一个内循环来选择第二个alpha值。在优化过程中，会通过 `最大化步长` 的方式来获得第二个alpha值。在简化版SMO算法中，我们会在选择 j 之后计算错误率 Ej 。但是在这里，我们会建立一个全局的缓存用于保存误差值，并从中选择使得步长或者说 `Ei-Ej` 最大的alpha值。并且我们在其中加入了 `核函数`，
 
 ```python
 class optStruct:
 
-    # Initialize the structure with the parameters
+    # 用于存放重要值的数据结构，方便传递，作为一个数据结构来使用
     def __init__(self, dataMatIn, classLabels, C, toler, kTup):
         self.X = dataMatIn
         self.labelMat = classLabels
@@ -272,12 +272,10 @@ class optStruct:
         for i in range(self.m):
             self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
 
-
 def calcEk(oS, k):
     fXk = float(multiply(oS.alphas, oS.labelMat).T * oS.K[:, k] + oS.b)
     Ek = fXk - float(oS.labelMat[k])
     return Ek
-
 
 def selectJ(i, oS, Ei):  # this is the second choice -heurstic, and calcs Ej
     maxK = -1
@@ -302,11 +300,9 @@ def selectJ(i, oS, Ei):  # this is the second choice -heurstic, and calcs Ej
         Ej = calcEk(oS, j)
     return j, Ej
 
-
 def updateEk(oS, k):  # after any alpha has changed update the new value in the cache
     Ek = calcEk(oS, k)
     oS.eCache[k] = [1, Ek]
-
 
 def innerL(i, oS):
     Ei = calcEk(oS, i)
@@ -352,7 +348,6 @@ def innerL(i, oS):
     else:
         return 0
 
-
 def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):  # full Platt SMO
     oS = optStruct(mat(dataMatIn), mat(
         classLabels).transpose(), C, toler, kTup)
@@ -379,7 +374,6 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):  # full Pl
         print "iteration number: %d" % iter
     return oS.b, oS.alphas
 
-
 def calcWs(alphas, dataArr, classLabels):
     X = mat(dataArr)
     labelMat = mat(classLabels).transpose()
@@ -401,6 +395,5 @@ def kernelTrans(X, A, kTup): #calc the kernel or transform data to a higher dime
     else: raise NameError('Houston We Have a Problem -- \
     That Kernel is not recognized')
     return K
-
 ```
 
