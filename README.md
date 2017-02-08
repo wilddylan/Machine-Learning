@@ -31,7 +31,7 @@
       - [相关代码](logistic/logRegres.py)
 - [x] [支持向量机](posts/svm.md)
       - [相关代码](svm/svmMLiA.py)
-- [ ] [AdaBoost算法提高分类性能]()
+- [ ] => [AdaBoost算法提高分类性能]()
       - [相关代码]()
 - [ ] [预测数值型数据：回归]()
       - [相关代码]()
