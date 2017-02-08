@@ -29,7 +29,7 @@
       - [相关代码](bayes/bayes.py)
 - [x] [Logistic回归](posts/logistic.md)
       - [相关代码](logistic/logRegres.py)
-- [x] [支持向量机](posts/svm.md) <网站等待更新中...>
+- [x] [支持向量机](posts/svm.md)
       - [相关代码](svm/svmMLiA.py)
 - [ ] [AdaBoost算法提高分类性能]()
       - [相关代码]()
