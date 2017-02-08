@@ -267,7 +267,7 @@ class optStruct:
         self.m = shape(dataMatIn)[0]
         self.alphas = mat(zeros((self.m, 1)))
         self.b = 0
-        self.eCache = mat(zeros((self.m, 2)))  # first column is valid flag
+        self.eCache = mat(zeros((self.m, 2)))
         self.K = mat(zeros((self.m, self.m)))
         for i in range(self.m):
             self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
@@ -277,17 +277,19 @@ def calcEk(oS, k):
     Ek = fXk - float(oS.labelMat[k])
     return Ek
 
-def selectJ(i, oS, Ei):  # this is the second choice -heurstic, and calcs Ej
+# 用于选择第二个alpha或者说内循环的alpha值
+def selectJ(i, oS, Ei):
     maxK = -1
     maxDeltaE = 0
     Ej = 0
-    # set valid #choose the alpha that gives the maximum delta E
+    
+    # 选择合适的第二个alpha值以保证在每次优化中采用最大步长
     oS.eCache[i] = [1, Ei]
     validEcacheList = nonzero(oS.eCache[:, 0].A)[0]
     if (len(validEcacheList)) > 1:
-        for k in validEcacheList:  # loop through valid Ecache values and find the one that maximizes delta E
+        for k in validEcacheList:  
             if k == i:
-                continue  # don't calc for i, waste of time
+                continue  # 不需要计算i了，浪费时间
             Ek = calcEk(oS, k)
             deltaE = abs(Ei - Ek)
             if (deltaE > maxDeltaE):
@@ -295,19 +297,21 @@ def selectJ(i, oS, Ei):  # this is the second choice -heurstic, and calcs Ej
                 maxDeltaE = deltaE
                 Ej = Ek
         return maxK, Ej
-    else:  # in this case (first time around) we don't have any valid eCache values
+    else: # 第一次循环我们会随机选择一个alpha值
         j = selectJrand(i, oS.m)
         Ej = calcEk(oS, j)
     return j, Ej
 
-def updateEk(oS, k):  # after any alpha has changed update the new value in the cache
+# 计算误差值并存放到缓存当中
+def updateEk(oS, k):
     Ek = calcEk(oS, k)
     oS.eCache[k] = [1, Ek]
 
+# 完整的优化过程
 def innerL(i, oS):
     Ei = calcEk(oS, i)
     if ((oS.labelMat[i] * Ei < -oS.tol) and (oS.alphas[i] < oS.C)) or ((oS.labelMat[i] * Ei > oS.tol) and (oS.alphas[i] > 0)):
-        j, Ej = selectJ(i, oS, Ei)  # this has been changed from selectJrand
+        j, Ej = selectJ(i, oS, Ei)  # 第二个alpha选择器中的启发式方法
         alphaIold = oS.alphas[i].copy()
         alphaJold = oS.alphas[j].copy()
         if (oS.labelMat[i] != oS.labelMat[j]):
@@ -319,21 +323,19 @@ def innerL(i, oS):
         if L == H:
             print "L==H"
             return 0
-        eta = 2.0 * oS.K[i, j] - oS.K[i, i] - oS.K[j, j]  # changed for kernel
+        eta = 2.0 * oS.K[i, j] - oS.K[i, i] - oS.K[j, j]
         if eta >= 0:
             print "eta>=0"
             return 0
         oS.alphas[j] -= oS.labelMat[j] * (Ei - Ej) / eta
         oS.alphas[j] = clipAlpha(oS.alphas[j], H, L)
-        updateEk(oS, j)  # added this for the Ecache
+        updateEk(oS, j)  # 更新误差缓存
         if (abs(oS.alphas[j] - alphaJold) < 0.00001):
             print "j not moving enough"
             return 0
         oS.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * \
-            (alphaJold - oS.alphas[j])  # update i by the same amount as j
-        # added this for the Ecache                    #the update is in the
-        # oppostie direction
-        updateEk(oS, i)
+            (alphaJold - oS.alphas[j])
+        updateEk(oS, i) # 更新误差缓存
         b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.K[
             i, i] - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.K[i, j]
         b2 = oS.b - Ej - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.K[
@@ -348,7 +350,8 @@ def innerL(i, oS):
     else:
         return 0
 
-def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):  # full Platt SMO
+# 完整的 Platt SMO 优化算法
+def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):  
     oS = optStruct(mat(dataMatIn), mat(
         classLabels).transpose(), C, toler, kTup)
     iter = 0
@@ -356,7 +359,7 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):  # full Pl
     alphaPairsChanged = 0
     while (iter < maxIter) and ((alphaPairsChanged > 0) or (entireSet)):
         alphaPairsChanged = 0
-        if entireSet:  # go over all
+        if entireSet:  # 遍历所有的值
             for i in range(oS.m):
                 alphaPairsChanged += innerL(i, oS)
                 print "fullSet, iter: %d i:%d, pairs changed %d" % (iter, i, alphaPairsChanged)
@@ -396,4 +399,3 @@ def kernelTrans(X, A, kTup): #calc the kernel or transform data to a higher dime
     That Kernel is not recognized')
     return K
 ```
-
