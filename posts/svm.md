@@ -253,12 +253,27 @@ shape(alphas[alphas > 0])
 
 对整个数据的扫描非常容易，而实现非边界alpha的扫描时，首先需要建立这些alpha值的列表，然后在对这个表进行遍历，同时该步骤会跳过那些已知的不会改变的alpha值。
 
-在选择第一个alpha值之后，算法会通过一个内循环来选择第二个alpha值。在优化过程中，会通过 `最大化步长` 的方式来获得第二个alpha值。在简化版SMO算法中，我们会在选择 j 之后计算错误率 Ej 。但是在这里，我们会建立一个全局的缓存用于保存误差值，并从中选择使得步长或者说 `Ei-Ej` 最大的alpha值。并且我们在其中加入了 `核函数`，
+在选择第一个alpha值之后，算法会通过一个内循环来选择第二个alpha值。在优化过程中，会通过 `最大化步长` 的方式来获得第二个alpha值。在简化版SMO算法中，我们会在选择 j 之后计算错误率 Ej 。但是在这里，我们会建立一个全局的缓存用于保存误差值，并从中选择使得步长或者说 `Ei-Ej` 最大的alpha值。并且我们在其中加入了 `核函数`，核函数作为一种工具，将数据转换成易于分类器理解的形式。下边加入的是一种称为 `径向基函数` 的最流行的核函数。那么究竟什么是核函数呢？
+
+![](../imgs/ml-svm-12.png)
+
+如上图所示，数据点处于一个圆中，人类的大脑可以看出来，但是对于分类器而言，它只能识别分类器的结果是大于 0 还是小于 0 ，如果只在x、y轴画线进行分类的话，我们并不会得到理想的结果。所以我们将数据从一个特征空间转换到另一个特征空间，在新的空间下，我们可以很容易的利用已有的工具对数据进行处理，数学家们喜欢将这个过程称之为 `从一个特征空间到另一个特征空间的映射`。在通常情况下，这种映射会将低维特征空间映射到高维空间。这个过程是通过核函数来实现的。可以把核函数想为一个 `包装器` 或者是 `接口` ，它能把数据从某个很难处理的形式转换成为另一个较容易处理的形式。
+
+> 在SVM优化中一个特别好的地方就是，所有的运算都可以写成 `内积` （也称 `点积`）的形式。向量的内积指的是两个向量相乘，之后得到单个标量或者数值。我们可以把内积运算替换成核函数，而不必做简化处理。将内积替换成核函数的方式被称为 `核技巧` 或者 `核变电`。
+
+###### 径向基核函数
+
+这是一个在SVM中常用的一个核函数，径向基函数是一个采用向量作为自变量的函数，能够基于向量距离运算输出一个标量。接下来，我们将会使用到径向基函数的高斯版本，其具体公式为：
+
+![](../imgs/ml-svm-13.png)
+
+其中，σ 是用户定义的用于确定 `到达率` 或者说函数值跌落到 0 的速度参数。接下来我们写出完整的代码：
 
 ```python
 class optStruct:
 
     # 用于存放重要值的数据结构，方便传递，作为一个数据结构来使用
+    # kTup包含核函数信息的元组
     def __init__(self, dataMatIn, classLabels, C, toler, kTup):
         self.X = dataMatIn
         self.labelMat = classLabels
@@ -270,7 +285,7 @@ class optStruct:
         self.eCache = mat(zeros((self.m, 2)))
         self.K = mat(zeros((self.m, self.m)))
         for i in range(self.m):
-            self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
+            self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup) # 使用核函数进行维度变换
 
 def calcEk(oS, k):
     fXk = float(multiply(oS.alphas, oS.labelMat).T * oS.K[:, k] + oS.b)
@@ -399,3 +414,44 @@ def kernelTrans(X, A, kTup): #calc the kernel or transform data to a higher dime
     That Kernel is not recognized')
     return K
 ```
+
+接下来我们编写一个测试函数：
+
+```python
+def testRbf(k1=0.1):
+    dataArr,labelArr = loadDataSet('testSetRBF.txt')
+    b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1)) #C=200 important
+    datMat=mat(dataArr); labelMat = mat(labelArr).transpose()
+    svInd=nonzero(alphas.A>0)[0]
+    sVs=datMat[svInd] #get matrix of only support vectors
+    labelSV = labelMat[svInd];
+    print "there are %d Support Vectors" % shape(sVs)[0]
+    m,n = shape(datMat)
+    errorCount = 0
+    for i in range(m):
+        kernelEval = kernelTrans(sVs,datMat[i,:],('rbf', k1))
+        predict=kernelEval.T * multiply(labelSV,alphas[svInd]) + b
+        if sign(predict)!=sign(labelArr[i]): errorCount += 1
+    print "the training error rate is: %f" % (float(errorCount)/m)
+    dataArr,labelArr = loadDataSet('testSetRBF2.txt')
+    errorCount = 0
+    datMat=mat(dataArr); labelMat = mat(labelArr).transpose()
+    m,n = shape(datMat)
+    for i in range(m):
+        kernelEval = kernelTrans(sVs,datMat[i,:],('rbf', k1))
+        predict=kernelEval.T * multiply(labelSV,alphas[svInd]) + b
+        if sign(predict)!=sign(labelArr[i]): errorCount += 1    
+    print "the test error rate is: %f" % (float(errorCount)/m)
+```
+
+```python
+>>> reload(svmMLiA)
+<module 'svmMLiA' from 'svmMLiA.pyc'>
+>>> svmMLiA.testRbf()
+```
+
+随便更改测试函数中k的值，发现错误率不同，这个值与数据相关。
+
+###### 结语
+
+支持向量机是一种分类器，是一种决策机，这是一个相当流行的算法。核方法不仅在SVM中适用，还可以用于其他算法，上边使用的径向基函数是一个常用的度量两个向量距离的核函数。支持向量机是一个二类分类器，当用其解决多类问题时，则需要额外的方法对其进行扩展。SVM的效果也对优化参数和所用核函数中的参数敏感。

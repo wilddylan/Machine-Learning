@@ -250,7 +250,7 @@ def kernelTrans(X, A, kTup): #calc the kernel or transform data to a higher dime
     That Kernel is not recognized')
     return K
 
-def testRbf(k1=1.3):
+def testRbf(k1=10):
     dataArr,labelArr = loadDataSet('testSetRBF.txt')
     b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1)) #C=200 important
     datMat=mat(dataArr); labelMat = mat(labelArr).transpose()
